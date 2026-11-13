@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Misión Madrid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bree+Serif&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Welt: Madrider Azulejo-Straßenschilder. Kobalt auf Fliesenweiß, Ocker als einziger warmer Akzent. */
+  /* Layout: eine schmale Spalte wie ein Fahrtenbuch; jede Station ist ein Straßenschild. */
+  --paper:#ECE8DC;
+  --tile:#FCFBF7;
+  --cobalt:#1F3C88;
+  --cobalt-2:#2E57B8;
+  --cobalt-soft:#DCE3F4;
+  --ochre:#E2A033;
+  --ochre-soft:#F7E6C2;
+  --ink:#1B2233;
+  --muted:#586178;
+  --ok:#22804F;
+  --ok-soft:#DCF0E3;
+  --bad:#B8382C;
+  --bad-soft:#F7DFDA;
+  --display:"Bree Serif", Rockwell, Georgia, serif;
+  --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background-color:var(--paper);
+  background-image:
+    radial-gradient(circle at 50% 50%, transparent 0 29%, rgba(31,60,136,.075) 30% 32%, transparent 33%),
+    conic-gradient(from 45deg at 50% 50%, rgba(31,60,136,.045) 0 25%, transparent 0 50%, rgba(31,60,136,.045) 0 75%, transparent 0);
+  background-size:64px 64px;
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:18px;
+  line-height:1.5;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--ochre);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);font-weight:400;color:var(--cobalt);text-wrap:balance;margin:0;line-height:1.15}
+p{margin:0}
+
+/* HUD */
+#hud{position:sticky;top:0;z-index:20;background:var(--cobalt);color:var(--tile);display:none}
+#hud.on{display:block}
+.hud-in{max-width:760px;margin:0 auto;padding:8px 16px;display:flex;gap:12px;align-items:center}
+.hud-me{display:flex;gap:8px;align-items:center;min-width:0;flex:1}
+.hud-me .av{font-size:26px;line-height:1}
+.hud-me b{font-family:var(--display);font-weight:400;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud-stat{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;font-size:16px}
+.hud-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);border-radius:10px;min-height:44px;min-width:44px;padding:0 12px;color:var(--tile);font-weight:700}
+.hud-btn:hover{background:rgba(255,255,255,.22)}
+
+main{max-width:760px;margin:0 auto;padding:20px 16px 64px;display:flex;flex-direction:column;gap:18px}
+
+/* Plaque = Azulejo-Straßenschild */
+.plaque{
+  background:var(--tile);
+  border:3px solid var(--cobalt);
+  border-radius:6px;
+  box-shadow:inset 0 0 0 5px var(--tile), inset 0 0 0 7px var(--cobalt-2), 0 3px 0 rgba(31,60,136,.25);
+  padding:22px 22px;
+  position:relative;
+}
+.plaque::before,.plaque::after{
+  content:"";position:absolute;width:12px;height:12px;background:var(--ochre);transform:rotate(45deg);top:-7px;
+}
+.plaque::before{left:-7px}
+.plaque::after{right:-7px}
+.card{background:var(--tile);border-radius:14px;padding:20px;box-shadow:0 1px 0 rgba(31,60,136,.15),0 8px 24px rgba(27,34,51,.07);display:flex;flex-direction:column;gap:14px}
+
+/* Start */
+.title-plaque{text-align:center;padding:30px 20px 24px}
+.title-plaque .calle{font-family:var(--display);font-size:15px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.title-plaque h1{font-size:clamp(42px,9vw,64px);margin:6px 0 4px}
+.title-plaque .sub{font-family:var(--display);font-size:22px;color:var(--ochre);text-shadow:0 1px 0 rgba(0,0,0,.08)}
+.lead{color:var(--muted);max-width:60ch}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-weight:700}
+.field small{color:var(--muted)}
+input[type=text]{font:inherit;font-size:20px;padding:12px 14px;border:2px solid var(--cobalt-soft);border-radius:10px;background:#fff;color:var(--ink);width:100%}
+input[type=text]:focus{border-color:var(--cobalt-2);outline:none}
+.avatars{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+@media (max-width:480px){.avatars{grid-template-columns:repeat(4,1fr)}}
+.avatars button{font-size:30px;aspect-ratio:1;border-radius:12px;border:2px solid var(--cobalt-soft);background:#fff}
+.avatars button[aria-pressed=true]{border-color:var(--cobalt);background:var(--ochre-soft);box-shadow:0 0 0 2px var(--cobalt)}
+details{border-top:1px dashed var(--cobalt-soft);padding-top:10px}
+summary{cursor:pointer;font-weight:700;color:var(--cobalt);min-height:36px;display:flex;align-items:center}
+.teacher ul{padding-left:20px;margin:8px 0}
+.teacher li{margin:4px 0}
+.err{color:var(--bad);font-weight:700}
+
+.btn{border:none;border-radius:12px;min-height:52px;padding:10px 20px;font-weight:700;font-size:18px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--cobalt);color:var(--tile);box-shadow:0 3px 0 #142a63}
+.btn.primary:hover{background:var(--cobalt-2)}
+.btn.primary:active{transform:translateY(2px);box-shadow:0 1px 0 #142a63}
+.btn.warm{background:var(--ochre);color:var(--ink);box-shadow:0 3px 0 #b07619}
+.btn.ghost{background:transparent;border:2px solid var(--cobalt-soft);color:var(--cobalt)}
+.btn.ghost:hover{border-color:var(--cobalt)}
+.btn[disabled]{opacity:.45;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .btn{flex:1 1 200px}
+
+/* Story */
+.scene-title{font-size:30px}
+.story-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.de-btn{border:2px solid var(--cobalt-soft);background:var(--tile);border-radius:999px;padding:6px 14px;min-height:40px;font-weight:700;color:var(--cobalt)}
+.de-btn[aria-pressed=true]{background:var(--cobalt);color:var(--tile);border-color:var(--cobalt)}
+.bubbles{display:flex;flex-direction:column;gap:12px}
+.bubble{display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:start;animation:rise .35s ease both}
+.bubble:nth-child(2){animation-delay:.12s}.bubble:nth-child(3){animation-delay:.24s}.bubble:nth-child(4){animation-delay:.36s}.bubble:nth-child(5){animation-delay:.48s}.bubble:nth-child(6){animation-delay:.6s}.bubble:nth-child(7){animation-delay:.72s}
+@keyframes rise{from{opacity:.001;transform:translateY(8px)}to{opacity:1;transform:none}}
+.bubble .who{width:48px;height:48px;border-radius:50%;background:var(--cobalt-soft);display:grid;place-items:center;font-size:26px}
+.bubble .msg{background:var(--tile);border-radius:4px 16px 16px 16px;padding:10px 14px;box-shadow:0 1px 0 rgba(31,60,136,.15)}
+.bubble .name{font-family:var(--display);color:var(--cobalt);font-size:15px}
+.bubble.narr{grid-template-columns:1fr}
+.bubble.narr .msg{background:transparent;box-shadow:none;border-left:4px solid var(--ochre);border-radius:0;font-style:italic;padding:4px 14px}
+.bubble.rule .msg{background:var(--ochre-soft);border-radius:12px;font-style:normal;border:none}
+.es-line{display:flex;gap:8px;align-items:flex-start}
+.es-line .t{flex:1}
+.de{display:none;color:var(--muted);font-style:italic;font-size:16px;margin-top:4px}
+body.show-de .de{display:block}
+.say{flex:none;border:none;background:var(--cobalt-soft);border-radius:50%;width:36px;height:36px;font-size:17px;display:grid;place-items:center}
+.say:hover{background:var(--ochre-soft)}
+
+.levels{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.levels{grid-template-columns:1fr}}
+.level{background:var(--tile);border:3px solid var(--cobalt-soft);border-radius:14px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:4px}
+.level:hover{border-color:var(--cobalt)}
+.level .ic{font-size:30px}
+.level b{font-family:var(--display);font-weight:400;font-size:24px;color:var(--cobalt)}
+.level span:last-child{color:var(--muted);font-size:16px}
+.level.ex{border-color:var(--ochre)}
+
+/* Karte */
+.map-head{display:flex;flex-direction:column;gap:6px}
+.codeslots{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.codeslots .lbl{font-weight:700;color:var(--muted);margin-right:4px}
+.slot{width:46px;height:52px;border-radius:6px;display:grid;place-items:center;font-family:var(--display);font-size:28px;background:var(--tile);border:2px dashed var(--cobalt-soft);color:var(--cobalt)}
+.slot.got{border:2px solid var(--cobalt);box-shadow:inset 0 0 0 3px var(--tile),inset 0 0 0 4px var(--cobalt-2);background:var(--tile)}
+.route{display:flex;flex-direction:column;gap:0;position:relative}
+.stop{display:grid;grid-template-columns:52px 1fr;gap:14px;position:relative;padding-bottom:18px}
+.stop::before{content:"";position:absolute;left:25px;top:52px;bottom:0;border-left:4px dotted var(--cobalt-2);opacity:.45}
+.stop:last-child::before{display:none}
+.stop-num{width:52px;height:52px;border-radius:50%;background:var(--cobalt);color:var(--tile);display:grid;place-items:center;font-family:var(--display);font-size:24px;z-index:1}
+.stop.locked .stop-num{background:#A9B0C2}
+.stop.done .stop-num{background:var(--ok)}
+.stop .plaque{padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.stop.locked .plaque{opacity:.6}
+.stop h3{font-size:24px}
+.stop .sub{color:var(--muted);font-style:italic}
+.topics{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.topics li{background:var(--cobalt-soft);color:var(--cobalt);border-radius:999px;padding:2px 10px;font-size:15px;font-weight:700}
+.stop-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.stars{font-size:24px;letter-spacing:2px;color:var(--ochre)}
+.stars .off{color:#C9CDD8}
+
+/* Aufgabe */
+.task-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.task-top .where{font-family:var(--display);font-weight:400;color:var(--cobalt);font-size:19px}
+.bar{height:10px;background:var(--cobalt-soft);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ochre);border-radius:999px;transition:width .4s}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:14px;font-weight:700;border-radius:6px;padding:2px 8px;background:var(--cobalt-soft);color:var(--cobalt)}
+.chip.rev{background:var(--ochre-soft);color:#7A4E0A}
+.chip.ex{background:var(--ochre);color:var(--ink)}
+.q{font-weight:700;font-size:19px}
+.es{font-family:var(--display);font-size:24px;color:var(--ink);line-height:1.35}
+.blank{display:inline-block;min-width:64px;border-bottom:3px solid var(--ochre);color:transparent}
+.scene{font-size:56px;line-height:1.1;background:linear-gradient(180deg,#E7F0FB,#F5F1E4);border-radius:12px;padding:14px;text-align:center;letter-spacing:6px}
+.reading{background:var(--ochre-soft);border-radius:12px;padding:12px 16px;border:none}
+.reading summary{color:#6B4407}
+.reading p{margin-top:8px}
+.reading .gloss{font-size:15px;color:var(--muted);margin-top:8px}
+
+.choices{display:grid;gap:10px}
+.choice{background:#fff;border:2px solid var(--cobalt-soft);border-radius:12px;min-height:56px;padding:10px 16px;text-align:left;font-size:20px;font-weight:700}
+.choice:hover:not([disabled]){border-color:var(--cobalt)}
+.choice.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.choice.good{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.choice[disabled]{cursor:default}
+.listen-btn{align-self:flex-start}
+
+.accents{display:flex;gap:6px;flex-wrap:wrap}
+.accents button{min-width:44px;min-height:44px;border-radius:8px;border:2px solid var(--cobalt-soft);background:#fff;font-size:20px;font-weight:700}
+.shake{animation:shake .35s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.match{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.match .col{display:flex;flex-direction:column;gap:8px}
+.mbtn{background:#fff;border:2px solid var(--cobalt-soft);border-radius:10px;min-height:52px;padding:8px 10px;font-weight:700;font-size:17px;text-align:left}
+.mbtn.sel{border-color:var(--cobalt);background:var(--cobalt-soft)}
+.mbtn.ok{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.mbtn.bad{border-color:var(--bad);background:var(--bad-soft)}
+.mbtn[disabled]{cursor:default}
+
+.answer-line{min-height:62px;border:2px dashed var(--cobalt-soft);border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.answer-line:empty::before{content:"Tippe die Wörter in der richtigen Reihenfolge an …";color:var(--muted);font-style:italic;padding-left:6px}
+.pool{display:flex;flex-wrap:wrap;gap:8px}
+.wtile{background:var(--tile);border:2px solid var(--cobalt);border-radius:6px;padding:8px 12px;font-family:var(--display);font-size:20px;color:var(--cobalt);min-height:46px;box-shadow:0 2px 0 var(--cobalt)}
+.wtile[disabled]{cursor:default}
+
+.fb{border-radius:12px;padding:12px 16px;line-height:1.45}
+.fb.ok{background:var(--ok-soft);color:#14512F;border-left:6px solid var(--ok)}
+.fb.bad{background:var(--bad-soft);color:#6D1E16;border-left:6px solid var(--bad)}
+.fb.info{background:var(--cobalt-soft);color:var(--cobalt)}
+.fb .rule{display:block;margin-top:6px;font-size:16px}
+.hints{display:flex;flex-direction:column;gap:8px}
+.hint{background:var(--ochre-soft);border-radius:10px;padding:8px 12px;font-size:17px}
+.hint b{color:#7A4E0A}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions .btn{flex:1 1 160px}
+
+/* Ergebnis */
+.result{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+.bigstars{font-size:48px;letter-spacing:6px;color:var(--ochre)}
+.bigstars span{display:inline-block;animation:pop .5s cubic-bezier(.3,1.6,.5,1) both}
+.bigstars span:nth-child(2){animation-delay:.25s}.bigstars span:nth-child(3){animation-delay:.5s}
+.bigstars .off{color:#C9CDD8}
+@keyframes pop{from{transform:scale(.2) rotate(-30deg);opacity:.001}to{transform:none;opacity:1}}
+.letter-tile{width:96px;height:104px;display:grid;place-items:center;font-family:var(--display);font-size:64px;color:var(--cobalt);background:var(--tile);border:3px solid var(--cobalt);border-radius:6px;box-shadow:inset 0 0 0 5px var(--tile),inset 0 0 0 7px var(--cobalt-2),0 4px 0 rgba(31,60,136,.3);animation:flip .8s .6s ease both}
+@keyframes flip{from{transform:perspective(400px) rotateY(90deg)}to{transform:none}}
+.letter-row{display:flex;gap:16px;align-items:center}
+.codebox{background:var(--cobalt);color:var(--tile);border-radius:12px;padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;width:100%}
+.codebox .c{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:24px;letter-spacing:.08em;font-weight:700}
+.codebox .lbl{font-size:14px;opacity:.85;display:block}
+.codebox button{background:var(--ochre);border:none;border-radius:8px;min-height:40px;padding:0 14px;font-weight:700;color:var(--ink)}
+.newtro{display:flex;flex-direction:column;gap:8px;width:100%}
+.tro-line{display:flex;gap:10px;align-items:center;background:var(--ochre-soft);border-radius:10px;padding:8px 12px}
+.tro-line .i{font-size:28px}
+
+/* Trophäen */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tro{background:#fff;border:2px solid var(--cobalt-soft);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:4px}
+.tro .i{font-size:34px}
+.tro b{font-family:var(--display);font-weight:400;color:var(--cobalt);font-size:18px}
+.tro span{font-size:14px;color:var(--muted)}
+.tro.lock{background:#F2F1EC;border-style:dashed}
+.tro.lock .i{filter:grayscale(1);opacity:.4}
+
+/* Schließfach */
+.locker{display:flex;flex-direction:column;gap:14px;align-items:center;background:linear-gradient(180deg,#5E6A86,#47516B);border-radius:10px;padding:24px 16px;color:#fff;box-shadow:inset 0 0 0 4px #3A4359}
+.locker .lk-label{font-family:var(--display);font-size:20px}
+.lk-slots{display:flex;gap:10px}
+.lk-slots .slot{background:#232A3B;border:2px solid #8C96B0;color:#F7E6C2;width:56px;height:64px;font-size:34px}
+.lk-letters{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.lk-letters .wtile{font-size:30px;min-width:56px}
+
+/* Zertifikat */
+.cert{display:flex;flex-direction:column;gap:14px}
+.cert .top{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.cert .av{font-size:64px;line-height:1}
+.cert h2{font-size:34px}
+.cert .rank{font-family:var(--display);font-size:24px;color:#8A5A0B}
+.cert .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cert .num{background:var(--cobalt-soft);border-radius:10px;padding:10px;text-align:center}
+.cert .num b{display:block;font-family:var(--display);font-weight:400;font-size:28px;color:var(--cobalt);font-variant-numeric:tabular-nums}
+.cert .num span{font-size:14px;color:var(--muted)}
+
+/* Overlay */
+#ov{position:fixed;inset:0;z-index:50;background:rgba(20,28,52,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto}
+#ov.on{display:flex}
+#ov .plaque{max-width:560px;width:100%;display:flex;flex-direction:column;gap:14px}
+#ov .zz{font-size:56px}
+.small{font-size:15px;color:var(--muted)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+<header id="hud" aria-label="Spielstand">
+  <div class="hud-in">
+    <div class="hud-me"><span class="av" id="hud-av">🦊</span><b id="hud-nick">Viajero/a</b></div>
+    <span class="hud-stat" id="hud-stars" title="Sterne">★ 0/12</span>
+    <span class="hud-stat" id="hud-time" title="Spielzeit">⏱ 0:00</span>
+    <button class="hud-btn" data-a="trophies" aria-label="Trophäen anzeigen">🏆</button>
+    <button class="hud-btn" data-a="pause" aria-label="Pause">⏸ Pause</button>
+  </div>
+</header>
+<main id="app"></main>
+<div id="ov" role="dialog" aria-modal="true"></div>
+
+<script>
+/* ============================================================
+   INHALT
+   ============================================================ */
+const SPK = {
+  narr:{n:'', i:''},
+  rule:{n:'Spielregel', i:'🎲'},
+  lucia:{n:'Lucía', i:'👧'},
+  sofia:{n:'Sofía', i:'🤳'},
+  eva:{n:'Eva', i:'👧🏽'},
+  marcos:{n:'Marcos', i:'🏊'}
+};
+
+const PROLOGUE = [
+  {s:'narr', es:'Es sábado por la mañana. Llegas a Madrid en el AVE. ¡Empieza tu intercambio!', de:'Es ist Samstagmorgen. Du kommst mit dem AVE (Schnellzug) in Madrid an. Dein Austausch beginnt!'},
+  {s:'lucia', es:'¡Hola! Soy Lucía, tu compañera de intercambio. ¡Bienvenido o bienvenida a Madrid!', de:'Hallo! Ich bin Lucía, deine Austauschpartnerin. Willkommen in Madrid!'},
+  {s:'narr', es:'Dejas tu mochila verde en el suelo. Un chico pasa corriendo… ¡y coge tu mochila!', de:'Du stellst deinen grünen Rucksack auf den Boden. Ein Junge rennt vorbei … und schnappt sich deinen Rucksack!'},
+  {s:'lucia', es:'¡Es Marcos, un chico de mi insti! Tiene una mochila verde como tu mochila. ¡Qué mala suerte!', de:'Das ist Marcos, ein Junge aus meiner Schule! Er hat einen grünen Rucksack wie deiner. So ein Pech!'},
+  {s:'lucia', es:'Mira, Marcos me escribe: «Tengo una mochila que no es mía. La dejo en una taquilla del parque acuático.» ¡Pero no escribe el código!', de:'Schau, Marcos schreibt mir: „Ich habe einen Rucksack, der nicht mir gehört. Ich lege ihn in ein Schließfach im Erlebnisbad.“ Aber den Code schreibt er nicht!'},
+  {s:'lucia', es:'Marcos es muy gracioso: deja las letras del código en su ruta. ¡Vamos!', de:'Marcos ist ein Witzbold: Er versteckt die Buchstaben des Codes auf seinem Weg. Los geht’s!'},
+  {s:'rule', de:'Für jede geschaffte Station bekommst du einen Buchstaben des Codes. Nach jeder Station erhältst du einen Speichercode. Schreib ihn auf, dann kannst du später weiterspielen.'}
+];
+
+const STATIONS = [
+{
+  icon:'🚄', name:'Estación de Atocha', sub:'Mi fin de semana', letter:'S',
+  topics:['Freizeit & Kollokationen','me/te/le + gustar','Medienkompetenz'],
+  intro:[
+    {s:'lucia', es:'Marcos siempre hace plogging en Madrid Río los sábados. ¡Vamos allí!', de:'Marcos macht samstags immer Plogging in Madrid Río. Lass uns hingehen!'},
+    {s:'lucia', es:'En el camino quiero conocerte. ¿Qué te gusta hacer el fin de semana?', de:'Unterwegs möchte ich dich kennenlernen. Was machst du gern am Wochenende?'}
+  ],
+  outro:[
+    {s:'lucia', es:'¡Genial! Ahora te conozco mejor. ¡Y ya estamos en Madrid Río!', de:'Super! Jetzt kenne ich dich besser. Und wir sind schon in Madrid Río!'},
+    {s:'narr', es:'Debajo de un árbol hay un papel de Marcos con una letra: la S.', de:'Unter einem Baum liegt ein Zettel von Marcos mit einem Buchstaben: dem S.'}
+  ],
+  tasks:[
+    {type:'match', tag:'Kollokationen', q:'Welches Verb passt zu welcher Ergänzung? Tippe links ein Verb und rechts die passende Ergänzung.',
+      pairs:[['hacer','deporte'],['jugar','al fútbol'],['montar','en bici'],['escuchar','música'],['ir','al cine'],['ver','una película']],
+      hints:['Kollokationen sind feste Wortverbindungen. Lerne sie immer zusammen!','Beispiel: Los sábados juego al fútbol y por la tarde voy al cine.','Tipp: „montar“ gehört zu „en bici“, „hacer“ gehört zu „deporte“.']},
+    {type:'flex', tag:'gustar', q:'Ergänze die Lücke.', es:'Lucía: «¿Qué te gusta hacer?» – Tú: «Me ___ jugar al baloncesto.»',
+      choices:['gusta','gustan','gusto'], answer:['gusta'],
+      fb:{gustan:'Nach gustar + Infinitiv (jugar) steht immer gusta, also Singular.', gusto:'Achtung: gustar funktioniert anders als „mögen“. Das Verb richtet sich nach dem, was gefällt: me gusta.'},
+      hints:['Was gefällt? Hier: jugar, ein Infinitiv. Dann steht gustar im Singular.','Beispiel: Me gusta correr. Te gusta leer.','Es beginnt mit gust… und endet auf -a.']},
+    {type:'flex', tag:'gustar', q:'Ergänze das Pronomen.', es:'A Lucía ___ gustan las series.',
+      choices:['le','me','te'], answer:['le'],
+      fb:{me:'me = mir. Hier geht es um Lucía, also ihr: le.', te:'te = dir. Lucía = ihr: le.'},
+      hints:['Wem gefällt es? Lucía, also 3. Person Singular.','me (mir) · te (dir) · le (ihm/ihr)','Das Pronomen hat zwei Buchstaben: l_']},
+    {type:'flex', tag:'gustar', q:'Lucía fragt dich. Ergänze das Pronomen.', es:'¿A ti ___ gustan los videojuegos?',
+      choices:['te','me','le'], answer:['te'],
+      fb:{me:'me = mir. Lucía fragt dich (a ti): te.', le:'le = ihm/ihr. A ti = dir: te.'},
+      hints:['a ti = dir.','me (mir) · te (dir) · le (ihm/ihr)','t_']},
+    {type:'flex', tag:'gustar', q:'Ergänze die Form von gustar.', es:'Me ___ los fines de semana. 😎',
+      choices:['gustan','gusta','gustas'], answer:['gustan'],
+      fb:{gusta:'Was gefällt? los fines de semana ist Plural: gustan.', gustas:'gustas heißt „du gefällst“. Hier gefallen die Wochenenden: gustan.'},
+      hints:['Ist das, was gefällt, Singular oder Plural?','Me gusta el sábado. – Me gustan los sábados.','Plural: gust _ _']},
+    {type:'order', tag:'gustar', q:'Bilde den Satz: „Mein Bruder fährt gerne Fahrrad.“',
+      tiles:['A','mi','hermano','le','gusta','montar','en','bici'],
+      answer:['A mi hermano le gusta montar en bici','Le gusta montar en bici a mi hermano'],
+      hints:['Bauplan: A + Person + Pronomen + gusta + Infinitiv.','Beispiel: A mi madre le gusta leer.','Anfang: A mi hermano le …']},
+    {type:'mc', tag:'Kollokationen', q:'Was heißt: „Am Wochenende treffe ich mich mit Freunden.“?',
+      choices:['El fin de semana quedo con amigos.','El fin de semana quedo a amigos.','El fin de semana me gusta amigos.'], answer:['El fin de semana quedo con amigos.'],
+      fb:{'El fin de semana quedo a amigos.':'quedar con alguien = sich mit jemandem treffen, also mit „con“.', 'El fin de semana me gusta amigos.':'gustar passt hier nicht. Gesucht ist „sich treffen“ = quedar.'},
+      hints:['Gesucht: sich mit jemandem treffen = quedar con …','Beispiel: Hoy quedo con Lucía.','Die richtige Präposition heißt „con“.']},
+    {type:'flex', tag:'gustar', q:'Übersetze: „Ich mag keine Hausaufgaben.“',
+      choices:['No me gustan los deberes.','No me gusta los deberes.','Me no gustan los deberes.'], answer:['No me gustan los deberes.','No me gustan las tareas.'],
+      fb:{'No me gusta los deberes':'los deberes ist Plural: gustan.', 'Me no gustan los deberes':'Das „no“ steht VOR dem Pronomen: No me gusta(n) …', 'No me gusta las tareas':'las tareas ist Plural: gustan.'},
+      hints:['Verneinung: no + me + gustar.','Beispiel: No me gustan las películas de terror.','No me gust… los deberes.']},
+    {type:'flex', tag:'Kollokationen', q:'Welches Verb passt? „Gitarre spielen“', es:'___ la guitarra',
+      choices:['tocar','jugar','hacer'], answer:['tocar'],
+      fb:{jugar:'jugar benutzt man für Spiele und Sport (jugar al fútbol). Instrumente spielt man mit tocar.', hacer:'hacer = machen. Für Instrumente sagt man tocar.'},
+      hints:['Spiel/Sport: jugar. Instrument: ?','Beispiel: Mi hermana toca el piano.','t _ _ _ r']},
+    {type:'mc', tag:'Medienkompetenz', q:'Lucía will euer Selfie posten (subir = hochladen). Was antwortest du am besten?', es:'Lucía: «¿Subo nuestra foto a internet?»',
+      choices:['Primero quiero ver la foto. ¡Y sin mi nombre completo, por favor!','¡Claro! Y escribe también mi dirección.','Sí, y pon mi número de móvil.'], answer:['Primero quiero ver la foto. ¡Y sin mi nombre completo, por favor!'],
+      fb:{'¡Claro! Y escribe también mi dirección.':'Deine Adresse gehört nicht ins Internet!', 'Sí, y pon mi número de móvil.':'Deine Handynummer ist privat. Nicht posten!'},
+      hints:['Denk an deine persönlichen Daten: Was gehört nicht ins Netz?','Gut ist: erst ansehen, dann entscheiden.','Die richtige Antwort beginnt mit „Primero …“']}
+  ]
+},
+{
+  icon:'🌳', name:'Madrid Río', sub:'Plogging en el parque', letter:'A',
+  topics:['estar + gerundio','nos/os/les + gustar','Wortschatz Texto A'],
+  intro:[
+    {s:'narr', es:'En Madrid Río hay muchos jóvenes. Están corriendo y recogiendo basura al mismo tiempo.', de:'In Madrid Río sind viele Jugendliche. Sie laufen und sammeln gleichzeitig Müll.'},
+    {s:'sofia', es:'¡Hola! Soy Sofía, influencer y deportista. ¿Buscáis a Marcos?', de:'Hallo! Ich bin Sofía, Influencerin und Sportlerin. Sucht ihr Marcos?'},
+    {s:'sofia', es:'Os ayudo… ¡pero primero vosotros nos ayudáis a recoger la basura!', de:'Ich helfe euch … aber zuerst helft ihr uns, den Müll aufzusammeln!'}
+  ],
+  outro:[
+    {s:'sofia', es:'¡Gracias! Así protegemos el medio ambiente. 🌱', de:'Danke! So schützen wir die Umwelt.'},
+    {s:'sofia', es:'Marcos está yendo al parque acuático. ¡Tiene una competición! Y mira, aquí hay una letra para ti: la A.', de:'Marcos ist gerade auf dem Weg zum Erlebnisbad. Er hat einen Wettkampf! Und schau, hier ist ein Buchstabe für dich: das A.'}
+  ],
+  tasks:[
+    {type:'flex', tag:'Gerundio', q:'Bilde das Gerundio:', es:'hablar → ___',
+      choices:['hablando','habliendo','hablado'], answer:['hablando'],
+      fb:{habliendo:'-ar-Verben bekommen -ando, nur -er/-ir-Verben bekommen -iendo.', hablado:'hablado ist das Partizip. Das Gerundio endet auf -ando/-iendo.'},
+      hints:['-ar → -ando · -er/-ir → -iendo','Beispiel: bailar → bailando','habl + …']},
+    {type:'input', tag:'Gerundio', q:'Bilde das Gerundio:', es:'correr → ___', answer:['corriendo'],
+      fb:{correndo:'-er-Verben bekommen -iendo: corriendo.', corrando:'-er-Verben bekommen -iendo, nicht -ando.', corrido:'corrido ist das Partizip. Gerundio: -iendo.'},
+      hints:['-ar → -ando · -er/-ir → -iendo','Beispiel: comer → comiendo','corr + …']},
+    {type:'input', tag:'Gerundio', q:'Bilde das Gerundio:', es:'escribir → ___', answer:['escribiendo'],
+      fb:{escribando:'-ir-Verben bekommen -iendo: escribiendo.', escribendo:'Es fehlt ein i: escribiendo.'},
+      hints:['-ar → -ando · -er/-ir → -iendo','Beispiel: vivir → viviendo','escrib + …']},
+    {type:'flex', tag:'Gerundio', q:'Sonderfall! Bilde das Gerundio:', es:'leer → ___',
+      choices:['leyendo','leiendo','leendo'], answer:['leyendo'],
+      fb:{leiendo:'Zwischen zwei Vokalen wird das i zu y: leyendo.', leendo:'-er-Verben bekommen -iendo, und zwischen zwei Vokalen wird das i zu y: leyendo.'},
+      hints:['Achtung, Sonderfall! Zwischen zwei Vokalen ändert sich das i.','Beispiel: traer → trayendo','le + y + …']},
+    {type:'flex', tag:'Gerundio', q:'Schau aufs Bild: Was macht Ana gerade? (correr)', scene:'🏃‍♀️ 🌳 🌳', es:'¿Qué está haciendo Ana?',
+      choices:['Está corriendo.','Es corriendo.','Está corre.'], answer:['Está corriendo.','Ana está corriendo.'],
+      fb:{'Es corriendo':'Für „gerade etwas tun“ brauchst du estar, nicht ser!', 'Está corre':'Nach estar steht das Gerundio: corriendo.', corriendo:'Fast! Du brauchst estar + Gerundio: Está corriendo.', 'Ana corre':'Das stimmt, aber gefragt ist estar + Gerundio: Está corriendo.'},
+      hints:['estar + Gerundio = gerade etwas tun','Beispiel: Pablo está nadando.','Está corr…']},
+    {type:'flex', tag:'Gerundio', q:'Ergänze die Form von estar.', scene:'🧒🏻 🧒🏾 🛍️ 🗑️', es:'Los chicos ___ recogiendo basura.',
+      choices:['están','está','son'], answer:['están'],
+      fb:{'está':'Los chicos = sie (Plural): están.', son:'ser passt nicht. Für „gerade tun“ brauchst du estar + Gerundio!'},
+      hints:['Wer? Los chicos, also 3. Person Plural.','estoy, estás, está, estamos, estáis, están','est _ _ _']},
+    {type:'flex', tag:'Gerundio', q:'Sofía fragt euch. Ergänze die Form von estar.', es:'Y vosotros, ¿qué ___ haciendo?',
+      choices:['estáis','están','estamos'], answer:['estáis'],
+      fb:{'están':'están = sie. vosotros = ihr: estáis.', estamos:'estamos = wir. vosotros = ihr: estáis.'},
+      hints:['Welche Person ist vosotros?','estoy, estás, está, estamos, estáis, están','est _ _ s (mit Akzent auf dem á)']},
+    {type:'input', tag:'Gerundio', q:'Ergänze mit estar + Gerundio (zwei Wörter).', es:'Nosotros ___ ___ (proteger) el medio ambiente.', answer:['estamos protegiendo'],
+      fb:{'estamos protegendo':'-er-Verben bekommen -iendo: protegiendo.', 'estamos protegemos':'Nach estar kommt das Gerundio, nicht noch eine konjugierte Form.', 'estan protegiendo':'nosotros = wir: estamos.', protegiendo:'Fast! Es fehlt die Form von estar: estamos protegiendo.', 'protegemos':'Das ist Präsens. Gefragt ist estar + Gerundio: estamos protegiendo.'},
+      hints:['Zwei Wörter: estar (konjugiert) + Gerundio.','Beispiel: Nosotros estamos corriendo.','estamos proteg…']},
+    {type:'flex', tag:'Gerundio', q:'Schau aufs Bild: Was macht der Mann gerade? (escuchar música)', scene:'👨🏽‍🦳 🎧 🎶', es:'¿Qué está haciendo el señor?',
+      choices:['Está escuchando música.','Está escuchendo música.','Es escuchando música.'], answer:['Está escuchando música.','El señor está escuchando música.'],
+      fb:{'Está escuchendo música':'escuchar ist ein -ar-Verb: escuchando.', 'Es escuchando música':'estar, nicht ser!', 'escuchando música':'Fast! Es fehlt estar: Está escuchando música.'},
+      hints:['estar + Gerundio','-ar → -ando','Está escuch…']},
+    {type:'flex', tag:'nos/os/les + gustar', q:'Ergänze das Pronomen.', es:'A los jóvenes ___ gusta hacer plogging.',
+      choices:['les','nos','os'], answer:['les'],
+      fb:{nos:'nos = uns. A los jóvenes = ihnen: les.', os:'os = euch. A los jóvenes = ihnen: les.', le:'le = ihm/ihr. Los jóvenes sind mehrere: les.'},
+      hints:['Wem gefällt es? Den Jugendlichen, also „ihnen“.','nos (uns) · os (euch) · les (ihnen)','l _ s']},
+    {type:'flex', tag:'nos/os/les + gustar', q:'Sofía fragt. Ergänze das Pronomen.', es:'¿A vosotros ___ gustan los parques?',
+      choices:['os','nos','les'], answer:['os'],
+      fb:{nos:'nos = uns. a vosotros = euch: os.', les:'les = ihnen. a vosotros = euch: os.'},
+      hints:['a vosotros = euch','nos (uns) · os (euch) · les (ihnen)','Zwei Buchstaben: o_']},
+    {type:'flex', tag:'nos/os/les + gustar', q:'Ihr antwortet. Ergänze das Pronomen.', es:'¡Sí! A nosotros ___ gusta mucho correr.',
+      choices:['nos','os','les'], answer:['nos'],
+      fb:{os:'os = euch. a nosotros = uns: nos.', les:'les = ihnen. a nosotros = uns: nos.'},
+      hints:['a nosotros = uns','nos (uns) · os (euch) · les (ihnen)','n _ s']},
+    {type:'match', tag:'Wortschatz', q:'Wortschatz: Ordne Spanisch und Deutsch einander zu.',
+      pairs:[['recoger','aufheben'],['proteger','beschützen'],['el medio ambiente','die Umwelt'],['al mismo tiempo','gleichzeitig'],['los jóvenes','die Jugendlichen'],['ayudar','helfen']],
+      hints:['Denk an die Plogging-Geschichte von Sofía.','Beispiel: Tenemos que proteger el medio ambiente.','Tipp: „al mismo tiempo“ hat mit Zeit (el tiempo) zu tun.']},
+    {type:'order', tag:'nos/os/les + gustar', q:'Bilde den Satz: „Ihnen gefallen die Parks von Madrid.“',
+      tiles:['A','ellos','les','gustan','los','parques','de','Madrid'],
+      answer:['A ellos les gustan los parques de Madrid','Les gustan los parques de Madrid a ellos'],
+      hints:['Bauplan: A + Person + Pronomen + gusta(n) + …','Beispiel: A ellas les gustan los perros.','Anfang: A ellos les …']}
+  ]
+},
+{
+  icon:'🌊', name:'Parque acuático', sub:'La competición', letter:'L',
+  topics:['jugar & traer','bueno/malo · buen/mal','Wortschatz Texto B','Aussprache'],
+  intro:[
+    {s:'narr', es:'El parque acuático está lejos, pero llegáis en autobús al mediodía.', de:'Das Erlebnisbad ist weit weg, aber ihr kommt mittags mit dem Bus an.'},
+    {s:'lucia', es:'¡Mira! La competición está empezando. Marcos es nadador… ¿es bueno?', de:'Schau! Der Wettkampf fängt gerade an. Marcos ist Schwimmer … ist er gut?'}
+  ],
+  outro:[
+    {s:'narr', es:'¡Marcos gana la competición! Pero cuando llegáis, ya no está.', de:'Marcos gewinnt den Wettkampf! Aber als ihr ankommt, ist er schon weg.'},
+    {s:'eva', es:'Hola, soy Eva, la hermana de Marcos. Tengo una letra para vosotros: la L. ¡Y un mensaje de Marcos!', de:'Hallo, ich bin Eva, die Schwester von Marcos. Ich habe einen Buchstaben für euch: das L. Und eine Nachricht von Marcos!'}
+  ],
+  tasks:[
+    {type:'flex', tag:'jugar', q:'Ergänze die Form von jugar.', es:'Yo ___ al fútbol los sábados.',
+      choices:['juego','jugo','jugamos'], answer:['juego'],
+      fb:{jugo:'jugo heißt „Saft“ 😉 – jugar ändert u zu ue: juego.', jugamos:'jugamos = wir. yo: juego.'},
+      hints:['jugar ist ein Stammwechsler: u → ue.','juego, juegas, juega, jugamos, jugáis, juegan','ju_go']},
+    {type:'flex', tag:'jugar', q:'Ergänze die Form von jugar.', es:'Nosotros ___ a las cartas.',
+      choices:['jugamos','juegamos','juegan'], answer:['jugamos'],
+      fb:{juegamos:'Bei nosotros und vosotros gibt es KEINEN Stammwechsel: jugamos.', juegan:'juegan = sie. nosotros: jugamos.'},
+      hints:['Bei nosotros/vosotros bleibt das u!','juego, juegas, juega, jugamos, jugáis, juegan','jug…']},
+    {type:'input', tag:'jugar', q:'Ergänze die Form von jugar.', es:'¿Tú ___ (jugar) al voleibol?', answer:['juegas'],
+      fb:{jugas:'jugar ändert u zu ue: juegas.', juega:'juega = er/sie. tú: juegas.', jugar:'Du musst jugar konjugieren: tú juegas.'},
+      hints:['u → ue, Endung für tú: -as','juego, juegas, juega …','jue…']},
+    {type:'flex', tag:'traer', q:'Ergänze die Form von traer.', es:'Yo ___ una tortilla para comer.',
+      choices:['traigo','traio','trago'], answer:['traigo'],
+      fb:{traio:'traer ist in der 1. Person unregelmäßig: traigo (wie hago, pongo, salgo).', trago:'trago heißt „ich schlucke“ 😄 – richtig ist traigo.'},
+      hints:['traer hat in der yo-Form ein -ig-: wie hacer → hago.','traigo, traes, trae, traemos, traéis, traen','tra _ go']},
+    {type:'input', tag:'traer', q:'Ergänze die Form von traer.', es:'¿Qué ___ (traer) vosotros?', answer:['traéis'],
+      fb:{traen:'traen = sie. vosotros: traéis.', traemos:'traemos = wir. vosotros: traéis.', traigo:'traigo = ich. vosotros: traéis.'},
+      hints:['vosotros-Endung bei -er-Verben: -éis','traigo, traes, trae, traemos, traéis, traen','tra…is (mit Akzent!)']},
+    {type:'flex', tag:'traer', q:'Ergänze die Form von traer.', es:'Marcos y su hermana ___ golosinas.',
+      choices:['traen','traemos','traigan'], answer:['traen'],
+      fb:{traemos:'traemos = wir. Marcos y su hermana = sie: traen.', traigan:'Diese Form kennst du noch nicht. Für „sie“: traen.'},
+      hints:['Marcos y su hermana = ellos (sie)','traigo, traes, trae, traemos, traéis, traen','tra _ n']},
+    {type:'flex', tag:'buen/mal', q:'Welche Form passt?', es:'Marcos es un ___ nadador.',
+      choices:['buen','bueno','buena'], answer:['buen'],
+      fb:{bueno:'Vor einem männlichen Nomen im Singular wird bueno zu buen.', buena:'nadador ist männlich: buen.'},
+      hints:['Steht das Adjektiv VOR einem männlichen Nomen im Singular?','un buen día · un mal momento','b _ _ n']},
+    {type:'flex', tag:'buen/mal', q:'Welche Form passt?', es:'No es un ___ jugador… ¡solo tiene mala suerte!',
+      choices:['mal','malo','mala'], answer:['mal'],
+      fb:{malo:'Vor einem männlichen Nomen im Singular wird malo zu mal.', mala:'jugador ist männlich: mal.'},
+      hints:['Wie bei bueno → buen: malo → ?','un mal día','m _ l']},
+    {type:'flex', tag:'buen/mal', q:'Welche Form passt?', es:'La competición es muy ___.',
+      choices:['buena','buen','bueno'], answer:['buena'],
+      fb:{buen:'buen steht nur VOR einem männlichen Nomen. Hier: la competición (weiblich): buena.', bueno:'la competición ist weiblich: buena.'},
+      hints:['Das Adjektiv steht hinter dem Nomen. Ist la competición männlich oder weiblich?','La pelota es buena.','bue _ _']},
+    {type:'flex', tag:'buen/mal', q:'Welche Form passt?', es:'Los toboganes del parque son muy ___.',
+      choices:['buenos','buenas','buen'], answer:['buenos'],
+      fb:{buenas:'los toboganes ist männlich Plural: buenos.', buen:'buen steht nur vor einem Nomen im Singular. Hier: buenos.'},
+      hints:['los toboganes: männlich und Plural','Los árboles son grandes.','buen _ _']},
+    {type:'match', tag:'Wortschatz', q:'Wortschatz: Ordne Spanisch und Deutsch einander zu.',
+      pairs:[['la toalla','das Handtuch'],['el árbol','der Baum'],['la ola','die Welle'],['el tobogán','die Rutsche'],['la suerte','das Glück'],['la pelota','der Ball']],
+      hints:['Stell dir das Erlebnisbad vor: Was gibt es dort?','Beispiel: Mi toalla es verde.','Tipp: „la ola“ gibt es im Wellenbad.']},
+    {type:'flex', tag:'Wortschatz', q:'Finde das Gegenteil.', es:'ganar ≠ ___',
+      choices:['perder','terminar','salir'], answer:['perder'],
+      fb:{terminar:'terminar ist das Gegenteil von empezar.', salir:'salir = abfahren/hinausgehen. Gegenteil von gewinnen: perder.'},
+      hints:['ganar = gewinnen. Gegenteil?','Por suerte, soy buen perdedor. (el perdedor = der Verlierer)','per…']},
+    {type:'flex', tag:'Wortschatz', q:'Ergänze das passende Wort.', es:'El parque acuático no está cerca, está ___.',
+      choices:['lejos','hasta','final'], answer:['lejos'],
+      fb:{hasta:'hasta = bis. Gegenteil von cerca: lejos.', final:'el final = das Ende. Gegenteil von cerca: lejos.'},
+      hints:['cerca = nah. Gegenteil?','Mi abuela vive lejos, en Bogotá.','l _ _ _ s']},
+    {type:'listen', tag:'Aussprache', q:'Hör zu und wähle die richtige Schreibung. Achte auf den Doppelvokal!', say:'leer', de:'(Bedeutung: lesen)',
+      choices:['leer','ler','lier'], answer:['leer'],
+      fb:{ler:'Im Spanischen spricht man beide e: le-er. Also leer.', lier:'Man hört zwei e: le-er.'},
+      hints:['Bei Doppelvokalen spricht man beide Vokale einzeln.','Beispiel: creer (glauben) = cre-er','Das Wort hat zwei e.']}
+  ]
+},
+{
+  icon:'📱', name:'El mensaje de Marcos', sub:'Lesen & Repaso', letter:'O',
+  topics:['Leseverstehen (W-Fragen)','Gemischte Wiederholung'],
+  text:'¡Hola, chicos! 😃 Hoy es un día genial. Por la mañana voy a la estación de Atocha porque mi abuela llega en el AVE. Después hago plogging en Madrid Río con mis amigos: corremos y al mismo tiempo recogemos basura, porque queremos proteger el medio ambiente. Al mediodía llego al parque acuático en autobús. Mis padres traen fruta y una tortilla de patatas. Mi hermana Eva no nada: juega a las cartas con mi padre y siempre gana. ¿Y yo? ¡Gano la competición de natación! 🏆 Pero tengo un problema: tengo una mochila verde… ¡y no es mi mochila! Ahora dejo la mochila en una taquilla y estoy buscando a la persona de la mochila. 😬',
+  gloss:'la abuela = die Großmutter · la natación = das Schwimmen · la taquilla = das Schließfach',
+  intro:[
+    {s:'eva', es:'Lee el mensaje de Marcos y contesta las preguntas. ¡Después te doy la última letra!', de:'Lies die Nachricht von Marcos und beantworte die Fragen. Danach gebe ich dir den letzten Buchstaben!'},
+    {s:'rule', de:'Tipp: Lies zuerst die Frage und such dann im Text gezielt nach der Antwort. Achte auf das Fragewort (quién, dónde, cuándo …).'}
+  ],
+  outro:[
+    {s:'eva', es:'¡Muy bien! La última letra es la O. La taquilla está allí. ¡Suerte!', de:'Sehr gut! Der letzte Buchstabe ist das O. Das Schließfach ist dort drüben. Viel Glück!'}
+  ],
+  tasks:[
+    {type:'mc', tag:'Leseverstehen', read:true, q:'Lies die Nachricht und beantworte die Frage.', es:'¿Quién llega en el AVE?',
+      choices:['La abuela de Marcos.','Eva, la hermana de Marcos.','Los padres de Marcos.'], answer:['La abuela de Marcos.'],
+      hints:['Fragewort quién = wer','Such im Text nach „AVE“.','Es ist eine Person aus Marcos’ Familie, die nicht in Madrid wohnt.']},
+    {type:'mc', tag:'Leseverstehen', read:true, q:'Lies die Nachricht und beantworte die Frage.', es:'¿Dónde hace plogging Marcos?',
+      choices:['En Madrid Río.','En el parque acuático.','En la estación de Atocha.'], answer:['En Madrid Río.'],
+      hints:['Fragewort dónde = wo','Such im Text nach „plogging“.','Es ist ein Park.']},
+    {type:'mc', tag:'Leseverstehen', read:true, q:'Lies die Nachricht und beantworte die Frage.', es:'¿Por qué recogen basura?',
+      choices:['Porque quieren proteger el medio ambiente.','Porque quieren ganar una competición.','Porque Sofía es influencer.'], answer:['Porque quieren proteger el medio ambiente.'],
+      hints:['Fragewort por qué = warum. Die Antwort beginnt im Text mit „porque“.','Such im Text nach „porque“.','Es hat mit der Umwelt zu tun.']},
+    {type:'mc', tag:'Leseverstehen', read:true, q:'Lies die Nachricht und beantworte die Frage.', es:'¿Cuándo llega Marcos al parque acuático?',
+      choices:['Al mediodía.','Por la mañana.','Por la tarde.'], answer:['Al mediodía.'],
+      hints:['Fragewort cuándo = wann','Such im Text nach „parque acuático“.','al mediodía = mittags']},
+    {type:'mc', tag:'Leseverstehen', read:true, q:'Lies die Nachricht und beantworte die Frage.', es:'¿Cómo llega Marcos al parque acuático?',
+      choices:['En autobús.','En el AVE.','Corriendo.'], answer:['En autobús.'],
+      hints:['Fragewort cómo = wie','Such nach „llego al parque acuático“.','Es ist ein Verkehrsmittel.']},
+    {type:'mc', tag:'Leseverstehen', read:true, q:'Lies die Nachricht und beantworte die Frage.', es:'¿Qué traen los padres de Marcos?',
+      choices:['Fruta y una tortilla de patatas.','Golosinas y fruta.','Una pelota y toallas.'], answer:['Fruta y una tortilla de patatas.'],
+      hints:['Fragewort qué = was','Such nach „traen“.','Es sind zwei Dinge zum Essen, eins davon ist typisch spanisch.']},
+    {type:'mc', tag:'Leseverstehen', read:true, q:'Lies die Nachricht und beantworte die Frage.', es:'¿Qué hace Eva?',
+      choices:['Juega a las cartas con su padre.','Nada en la competición.','Hace plogging con Marcos.'], answer:['Juega a las cartas con su padre.'],
+      fb:{'Nada en la competición.':'Lies genau: „Mi hermana Eva no nada …“'},
+      hints:['Such nach „Eva“.','Achtung: „no nada“ heißt „schwimmt nicht“.','Eva spielt etwas.']},
+    {type:'input', tag:'Repaso', q:'Repaso: Ergänze mit estar + Gerundio (zwei Wörter).', es:'¿Qué estás haciendo? – ___ ___ (buscar) mi mochila.', answer:['Estoy buscando'],
+      fb:{'estoy buscado':'Gerundio von -ar-Verben: -ando, also buscando.', 'estoy buscendo':'buscar ist ein -ar-Verb: buscando.', 'busco':'Das ist Präsens. Gefragt ist estar + Gerundio: Estoy buscando.', 'estoy busco':'Nach estar steht das Gerundio: buscando.', 'esta buscando':'Du sprichst von dir selbst (yo): Estoy buscando.'},
+      hints:['estar (yo-Form) + Gerundio','Beispiel: Estoy leyendo un libro.','Estoy busc…']},
+    {type:'input', tag:'Repaso', q:'Repaso: Ergänze Pronomen und Form von gustar (zwei Wörter).', es:'A mis padres ___ ___ (gustar) los parques.', answer:['les gustan'],
+      fb:{'les gusta':'los parques ist Plural: gustan.', 'le gustan':'mis padres = ihnen (Plural): les.', 'le gusta':'Zweimal Plural: les (ihnen) und gustan (die Parks).', 'gustan':'Es fehlt das Pronomen: les gustan.'},
+      hints:['Zwei Fragen: Wem gefällt es? Was gefällt (Singular/Plural)?','A mis amigos les gustan los perros.','les gust…']},
+    {type:'input', tag:'Repaso', q:'Repaso: Ergänze die Form von traer.', es:'Yo siempre ___ (traer) golosinas.', answer:['traigo'],
+      fb:{traio:'yo-Form mit -ig-: traigo.', trae:'trae = er/sie. yo: traigo.', traer:'Konjugieren! yo: traigo.'},
+      hints:['traer hat in der yo-Form ein -ig-.','hacer → hago · traer → …','tra _ _ o']},
+    {type:'input', tag:'Repaso', q:'Repaso: Ergänze die richtige Form von bueno.', es:'¡Hoy es un ___ (bueno) día!', answer:['buen'],
+      fb:{bueno:'Vor männlichem Nomen im Singular: buen.', buena:'día ist männlich (el día): buen.'},
+      hints:['Das Adjektiv steht VOR einem männlichen Nomen im Singular.','un buen nadador','b _ _ n']},
+    {type:'input', tag:'Repaso', q:'Repaso: Ergänze die Form von jugar.', es:'¿___ (jugar) vosotros al baloncesto?', answer:['Jugáis'],
+      fb:{'jueguais':'Bei vosotros kein Stammwechsel: jugáis.', 'juegais':'Bei vosotros kein Stammwechsel: jugáis.', juegan:'juegan = sie. vosotros: jugáis.', jugamos:'jugamos = wir. vosotros: jugáis.'},
+      hints:['Bei nosotros/vosotros bleibt das u.','juego, juegas, juega, jugamos, jugáis, juegan','jug _ _ s (mit Akzent)']}
+  ]
+}
+];
+
+const LOCKER_INTRO = [
+  {s:'narr', es:'Estás delante de la taquilla. El código tiene cuatro letras.', de:'Du stehst vor dem Schließfach. Der Code hat vier Buchstaben.'},
+  {s:'rule', de:'Ordne deine vier Buchstaben zu einem spanischen Wort, das zum Erlebnisbad passt.'}
+];
+const FINALE = [
+  {s:'narr', es:'¡La taquilla se abre! Allí está tu mochila verde, con tu móvil.', de:'Das Schließfach geht auf! Da ist dein grüner Rucksack mit deinem Handy.'},
+  {s:'marcos', es:'¡Hola! Soy Marcos. ¡Perdón por la mochila! ¿Jugamos a las cartas con Eva? Ella siempre gana…', de:'Hallo! Ich bin Marcos. Entschuldige wegen des Rucksacks! Spielen wir mit Eva Karten? Sie gewinnt immer …'},
+  {s:'lucia', es:'¡Misión cumplida! Ahora sí: ¡bienvenido o bienvenida a Madrid!', de:'Mission erfüllt! Jetzt aber wirklich: Willkommen in Madrid!'}
+];
+
+const TROPHIES = [
+  {id:'sinpistas', i:'🎯', n:'Sin pistas', d:'Eine Station ohne Pistas geschafft'},
+  {id:'valiente', i:'🔥', n:'Valiente', d:'Eine Station im Modo Experto geschafft'},
+  {id:'gerundio', i:'🌀', n:'Rey/Reina del gerundio', d:'Alle Gerundio-Aufgaben im ersten Versuch richtig'},
+  {id:'eco', i:'🌱', n:'Eco-héroe', d:'Beim Plogging in Madrid Río geholfen'},
+  {id:'agua', i:'🏊', n:'Campeón/a del agua', d:'Parque acuático mit 3 Sternen'},
+  {id:'detective', i:'🔍', n:'Detective', d:'Alle W-Fragen im ersten Versuch richtig'},
+  {id:'rindo', i:'💪', n:'No me rindo', d:'Eine Revancha-Aufgabe gelöst: aus Fehlern gelernt!'},
+  {id:'perfecto', i:'💎', n:'Perfecto', d:'Eine Station ohne Fehler und ohne Pistas'},
+  {id:'mision', i:'🗝️', n:'Misión cumplida', d:'Das Schließfach geöffnet'},
+  {id:'leyenda', i:'👑', n:'Leyenda', d:'Alle 12 Sterne gesammelt'}
+];
+const AVATARS = ['🦊','🐼','🦁','🐸','🐙','🦄','🐢','🦉'];
+const PRAISE = ['¡Correcto!','¡Muy bien!','¡Genial!','¡Perfecto!','¡Fenomenal!','¡Olé!','¡Estupendo!'];
+
+/* ============================================================
+   ZUSTAND
+   ============================================================ */
+const S = {screen:'start', nick:'', avatar:'🦊', best:[0,0,0,0], tro:0, elapsed:0, paused:false, run:null, lk:null, say:[]};
+const app = document.getElementById('app');
+const ov = document.getElementById('ov');
+
+/* ============================================================
+   HILFSFUNKTIONEN
+   ============================================================ */
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function norm(s){ return String(s).toLowerCase().replace(/[¡!¿?.,;:«»"“”…]/g,' ').replace(/\s+/g,' ').trim(); }
+function strip(s){ return norm(s).normalize('NFD').replace(/[̀-ͯ]/g,''); }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function grade(t, ans){
+  const a = norm(ans); if(!a) return 'empty';
+  for(const x of t.answer) if(norm(x)===a) return 'exact';
+  for(const x of t.answer) if(strip(x)===strip(a)) return 'accent';
+  return 'wrong';
+}
+function lookupFb(t, ans){
+  if(!t.fb) return null; const k = strip(ans);
+  for(const [key,msg] of Object.entries(t.fb)) if(strip(key)===k) return msg;
+  return null;
+}
+function fmtTime(s){ const h=Math.floor(s/3600), m=Math.floor(s%3600/60), x=s%60; return (h? h+':'+String(m).padStart(2,'0') : m)+':'+String(x).padStart(2,'0'); }
+function baseNormal(t){ return {mc:10, flex:10, listen:10, input:20, match:15, order:15}[t.type]; }
+function maxNormal(i){ return STATIONS[i].tasks.reduce((s,t)=>s+baseNormal(t),0); }
+function starsFor(i, score){ if(!score) return 0; const r = score/maxNormal(i); return r>=0.85?3 : r>=0.6?2 : 1; }
+function totalStars(){ return S.best.reduce((s,b,i)=>s+starsFor(i,b),0); }
+function totalPoints(){ return S.best.reduce((s,b)=>s+b,0); }
+function hasTro(id){ const i=TROPHIES.findIndex(t=>t.id===id); return !!(S.tro & (1<<i)); }
+function award(id, list){ const i=TROPHIES.findIndex(t=>t.id===id); if(!(S.tro & (1<<i))){ S.tro |= (1<<i); if(list) list.push(TROPHIES[i]); } }
+function rankTitle(){ const s=totalStars(); return s>=12?'¡Leyenda de Madrid! 👑' : s>=9?'Experto/a en Madrid 🏅' : s>=5?'Explorador/a 🧭' : 'Turista 🧳'; }
+function starHtml(n, big){ let h=''; for(let k=0;k<3;k++) h += k<n ? '<span>★</span>' : '<span class="off">★</span>'; return `<span class="${big?'bigstars':'stars'}" aria-label="${n} von 3 Sternen">${h}</span>`; }
+function blankify(s){ return esc(s).replace(/___/g,'<span class="blank">___</span>'); }
+
+/* Sprachausgabe */
+function speak(text){
+  try{
+    if(!('speechSynthesis' in window)) return false;
+    const u = new SpeechSynthesisUtterance(String(text).replace(/___/g,' … ').replace(/[😃😬🏆😎🌱]/gu,''));
+    u.lang = 'es-ES'; u.rate = 0.9;
+    const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith('es'));
+    if(v) u.voice = v;
+    speechSynthesis.cancel(); speechSynthesis.speak(u); return true;
+  }catch(e){ return false; }
+}
+function sayBtn(text){ S.say.push(text); return `<button class="say" data-a="say" data-t="${S.say.length-1}" aria-label="Vorlesen">🔊</button>`; }
+
+/* Speichercode: keine Daten werden gespeichert, der Code trägt den Spielstand */
+const ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+const MASK = (()=>{ let x=2026, m=[]; for(let i=0;i<60;i++){ x=(Math.imul(x,1103515245)+12345)>>>0; m.push((x>>>16)&1); } return m; })();
+function checksum(v,t){ return (v[0]*3+v[1]*5+v[2]*7+v[3]*11+t*13+77)%256; }
+function makeCode(best=S.best, tro=S.tro){
+  const v = best.map(b=>Math.min(1023,Math.max(0,b|0))); const t = tro & 1023;
+  const bits = v.map(n=>n.toString(2).padStart(10,'0')).join('') + t.toString(2).padStart(10,'0') + checksum(v,t).toString(2).padStart(8,'0') + '00';
+  let out='';
+  for(let i=0;i<60;i+=5){ let n=0; for(let j=0;j<5;j++) n = n*2 + ((+bits[i+j]) ^ MASK[i+j]); out += ALPH[n]; }
+  return out.slice(0,4)+'-'+out.slice(4,8)+'-'+out.slice(8);
+}
+function readCode(str){
+  const c = String(str).toUpperCase().replace(/[^0-9A-Z]/g,'');
+  if(c.length!==12) return null;
+  let bits='';
+  for(let i=0;i<12;i++){ const n = ALPH.indexOf(c[i]); if(n<0) return null; const b=n.toString(2).padStart(5,'0'); for(let j=0;j<5;j++) bits += (+b[j]) ^ MASK[i*5+j]; }
+  if(bits.slice(58)!=='00') return null;
+  const num = (a,b)=>parseInt(bits.slice(a,b),2);
+  const v = [num(0,10),num(10,20),num(20,30),num(30,40)], t = num(40,50), chk = num(50,58);
+  if(checksum(v,t)!==chk) return null;
+  for(let i=1;i<4;i++) if(v[i]>0 && v[i-1]===0) return null;
+  return {best:v, tro:t};
+}
+
+/* ============================================================
+   RAHMEN: HUD, Timer, Pause
+   ============================================================ */
+function hud(){
+  document.getElementById('hud').classList.toggle('on', S.screen!=='start');
+  document.getElementById('hud-av').textContent = S.avatar;
+  document.getElementById('hud-nick').textContent = S.nick;
+  document.getElementById('hud-stars').textContent = '★ '+totalStars()+'/12';
+  document.getElementById('hud-time').textContent = '⏱ '+fmtTime(S.elapsed);
+}
+setInterval(()=>{
+  if(S.screen!=='start' && !S.paused && !document.hidden){ S.elapsed++; document.getElementById('hud-time').textContent='⏱ '+fmtTime(S.elapsed); }
+},1000);
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden && S.screen!=='start' && !S.paused) openPause(); });
+
+function openPause(){
+  S.paused = true; try{ speechSynthesis.cancel(); }catch(e){}
+  ov.innerHTML = `<div class="plaque">
+    <div class="zz">😴</div>
+    <h2>Siesta: Pause</h2>
+    <p>Die Zeit ist angehalten. Ruh dich kurz aus!</p>
+    <div class="codebox"><div><span class="lbl">Dein Speichercode</span><span class="c">${makeCode()}</span></div><button data-a="copy" data-c="${makeCode()}">Kopieren</button></div>
+    <p class="small">Der Code speichert abgeschlossene Stationen, Punkte und Trophäen. ${S.run?'Die Station, die du gerade spielst, ist noch nicht im Code. ':''}Schreib ihn in dein Heft!</p>
+    <button class="btn primary" data-a="resume">▶ Weiterspielen</button>
+    ${S.run?'<button class="btn ghost" data-a="abort">Station abbrechen und zur Karte</button>':''}
+  </div>`;
+  ov.classList.add('on'); ov.querySelector('[data-a=resume]').focus();
+}
+function closeOv(){ ov.classList.remove('on'); ov.innerHTML=''; S.paused=false; }
+function openTrophies(){
+  S.paused = true;
+  const got = TROPHIES.filter(t=>hasTro(t.id)).length;
+  ov.innerHTML = `<div class="plaque">
+    <h2>Trophäen · ${got}/${TROPHIES.length}</h2>
+    <div class="tgrid">${TROPHIES.map(t=>`<div class="tro ${hasTro(t.id)?'':'lock'}"><span class="i">${t.i}</span><b>${esc(t.n)}</b><span>${esc(t.d)}</span></div>`).join('')}</div>
+    <button class="btn primary" data-a="resume">Schließen</button></div>`;
+  ov.classList.add('on'); ov.querySelector('[data-a=resume]').focus();
+}
+
+function show(html, screen){
+  S.screen = screen; app.innerHTML = html; hud(); window.scrollTo(0,0);
+}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+function renderStart(err){
+  show(`
+  <section class="plaque title-plaque">
+    <div class="calle">Calle de la Aventura · Madrid</div>
+    <h1>Misión Madrid</h1>
+    <div class="sub">¿Dónde está mi mochila?</div>
+  </section>
+  <section class="card">
+    <p class="lead">Ein Spanisch-Abenteuer zur Klausurvorbereitung: ¡Apúntate! 2, Unidad 1. Vier Stationen, ein verlorener Rucksack und ein geheimer Code. Du spielst allein und in deinem Tempo.</p>
+    <div class="field">
+      <label for="nick">Dein Spitzname</label>
+      <input type="text" id="nick" maxlength="16" placeholder="z. B. Tortilla99" value="${esc(S.nick)}" autocomplete="off">
+      <small>Bitte keinen echten Namen. Persönliche Daten bleiben privat. Das Spiel speichert nichts.</small>
+    </div>
+    <div class="field">
+      <label id="av-l">Wähle deinen Avatar</label>
+      <div class="avatars" role="group" aria-labelledby="av-l">${AVATARS.map(a=>`<button data-a="avatar" data-v="${a}" aria-pressed="${a===S.avatar}">${a}</button>`).join('')}</div>
+    </div>
+    <button class="btn primary" data-a="new">¡Vamos! Abenteuer starten</button>
+    <details ${err?'open':''}>
+      <summary>Ich habe einen Speichercode</summary>
+      <div class="field" style="margin-top:8px">
+        <label for="codein">Speichercode eingeben</label>
+        <input type="text" id="codein" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        ${err?`<p class="err">${err}</p>`:''}
+        <button class="btn warm" data-a="load">Weiterspielen</button>
+      </div>
+    </details>
+    <details class="teacher">
+      <summary>Für Lehrkräfte</summary>
+      <ul>
+        <li><b>Station 1 · Atocha:</b> Freizeitaktivitäten, Kollokationen, me/te/le + gustar, Datenschutz (MK)</li>
+        <li><b>Station 2 · Madrid Río:</b> estar + gerundio (inkl. leyendo), nos/os/les + gustar, Wortschatz Texto A</li>
+        <li><b>Station 3 · Parque acuático:</b> jugar, traer, bueno/malo · buen/mal, Wortschatz Texto B, Doppelvokale</li>
+        <li><b>Station 4 · Mensaje:</b> Leseverstehen mit W-Fragen, gemischte Wiederholung (freie Eingabe)</li>
+        <li><b>Unterstützung:</b> drei gestufte Pistas pro Aufgabe (Regel, Beispiel, Teillösung; je −20 % Punkte), fehlerspezifisches Feedback, deutsche Übersetzung der Story zuschaltbar, Akzenttasten, Vorlesefunktion.</li>
+        <li><b>Forderung:</b> Modo Experto pro Station (freie Eingabe statt Auswahl, doppelte Punkte). Fehlende Akzente werden akzeptiert, kosten aber 25 %.</li>
+        <li><b>Kein Game Over:</b> Nach zwei Fehlversuchen wird die Lösung erklärt, die Aufgabe kommt als „Revancha“ am Stationsende wieder.</li>
+        <li><b>Datenschutz:</b> Es wird nichts gespeichert. Der Spielstand steckt im Speichercode. Geben Sie den Code einer Schülerin oder eines Schülers hier ein, sehen Sie Sterne, Punkte und Trophäen.</li>
+      </ul>
+    </details>
+  </section>`, 'start');
+}
+
+function renderStory(title, lines, btnLabel, onDone, extra=''){
+  S.next = onDone; S.say = [];
+  const de =document.body.classList.contains('show-de');
+  const b = lines.map(l=>{
+    const sp = SPK[l.s];
+    if(l.s==='rule') return `<div class="bubble narr rule"><div class="msg"><b>🎲 Spielregel:</b> ${esc(l.de)}</div></div>`;
+    const inner = `<div class="es-line"><span class="t">${esc(l.es)}</span>${sayBtn(l.es)}</div><div class="de">${esc(l.de)}</div>`;
+    if(l.s==='narr') return `<div class="bubble narr"><div class="msg">${inner}</div></div>`;
+    return `<div class="bubble"><div class="who" aria-hidden="true">${sp.i}</div><div class="msg"><div class="name">${sp.n}</div>${inner}</div></div>`;
+  }).join('');
+  show(`<section class="card">
+    <div class="story-head"><h2 class="scene-title">${esc(title)}</h2>
+    <button class="de-btn" data-a="de" aria-pressed="${de}">🇩🇪 Deutsche Hilfe</button></div>
+    <div class="bubbles">${b}</div>
+    ${extra}
+    ${btnLabel?`<button class="btn primary" data-a="story-next">${btnLabel}</button>`:''}
+  </section>`, 'story');
+}
+
+function renderMap(note){
+  const letters = STATIONS.map((st,i)=>S.best[i]>0? st.letter : '');
+  const allDone = S.best.every(b=>b>0);
+  const stops = STATIONS.map((st,i)=>{
+    const unlocked = i===0 || S.best[i-1]>0, done = S.best[i]>0;
+    const cls = done?'done':unlocked?'':'locked';
+    const btn = !unlocked ? '<span class="small">🔒 Erst die Station davor schaffen</span>'
+      : `<button class="btn ${done?'ghost':'primary'}" data-a="open-st" data-i="${i}">${done?'Nochmal (mehr Sterne?)':'Station starten'}</button>`;
+    return `<article class="stop ${cls}">
+      <div class="stop-num" aria-hidden="true">${done?'✓':i+1}</div>
+      <div class="plaque">
+        <h3>${st.icon} ${esc(st.name)}</h3>
+        <p class="sub">${esc(st.sub)}</p>
+        <ul class="topics">${st.topics.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+        <div class="stop-foot">${done? starHtml(starsFor(i,S.best[i])) + ` <span class="small">${S.best[i]} Punkte</span>` : ''}${btn}</div>
+      </div></article>`;
+  }).join('');
+  const lockerBtn = !allDone ? '<span class="small">🔒 Sammle zuerst alle vier Buchstaben</span>'
+    : hasTro('mision') ? '<button class="btn warm" data-a="cert">📜 Zertifikat ansehen</button>'
+    : '<button class="btn warm" data-a="locker">🗝️ Schließfach öffnen</button>';
+  show(`
+  ${note?`<div class="fb info">${note}</div>`:''}
+  <section class="map-head">
+    <h2 class="scene-title">Tu ruta por Madrid</h2>
+    <div class="codeslots"><span class="lbl">Code:</span>${letters.map(l=>`<span class="slot ${l?'got':''}">${l||'?'}</span>`).join('')}</div>
+  </section>
+  <div class="route">${stops}
+    <article class="stop ${allDone?'':'locked'}">
+      <div class="stop-num" aria-hidden="true">🗝️</div>
+      <div class="plaque"><h3>La taquilla</h3><p class="sub">Das Schließfach mit deinem Rucksack</p><div class="stop-foot">${lockerBtn}</div></div>
+    </article>
+  </div>
+  <div class="row"><button class="btn ghost" data-a="trophies">🏆 Trophäen</button><button class="btn ghost" data-a="pause">💾 Speichercode / Pause</button></div>`, 'map');
+}
+
+function openStation(i){
+  const st = STATIONS[i];
+  const extra = `<div class="levels">
+    <button class="level" data-a="level" data-v="normal"><span class="ic">🌱</span><b>Normal</b><span>Antworten auswählen · 10 Punkte pro Aufgabe</span></button>
+    <button class="level ex" data-a="level" data-v="experto"><span class="ic">🔥</span><b>Experto</b><span>Antworten selbst tippen · 20 Punkte · Trophäe „Valiente“</span></button>
+  </div><p class="small">Wähle dein Level für diese Station. Du kannst jede Station später wiederholen.</p>`;
+  S.pending = i;
+  renderStory(`${st.icon} ${st.name}`, st.intro, null, null, extra);
+}
+
+function startRun(i, level){
+  const st = STATIONS[i];
+  S.run = {st:i, level, queue: st.tasks.map((t,k)=>({k, rev:false})), pos:0, score:0, hints:0, mistakes:0, gerOK:true, wOK:true, rindo:false, cur:null};
+  renderTask();
+}
+
+/* ---------- Aufgaben ---------- */
+function modeOf(t){ const r=S.run; return t.type==='flex' ? (r.level==='experto'?'input':'mc') : t.type; }
+function baseOf(t){ const m = modeOf(t); return {mc:10, listen:10, input:20, match:15, order:15}[m]; }
+
+function renderTask(){
+  const r = S.run, st = STATIONS[r.st], item = r.queue[r.pos], t = st.tasks[item.k], mode = modeOf(t);
+  S.say = [];
+  if(!r.cur){
+    r.cur = {tries:0, hints:0, done:false, wrongPicks:[], choices: t.choices? shuffle(t.choices):null};
+    if(mode==='match') r.cur.m = {L:shuffle(t.pairs.map((_,k)=>k)), R:shuffle(t.pairs.map((_,k)=>k)), sel:null, ok:[], wrong:0, flash:null};
+    if(mode==='order') r.cur.o = {pool:shuffle(t.tiles.map((_,k)=>k)), picked:[]};
+  }
+  const n = r.queue.length, pct = Math.round(r.pos/n*100);
+  const reading = t.read ? `<details class="reading" open><summary>📱 Mensaje de Marcos</summary><p>${esc(st.text)}</p><p class="gloss">${esc(st.gloss)}</p></details>` : '';
+  show(`<section class="task" style="display:flex;flex-direction:column;gap:12px">
+    <div class="task-top"><span class="where">${st.icon} ${esc(st.name)}</span><span>Aufgabe ${r.pos+1} / ${n}</span><span id="t-pts">🪙 ${r.score}</span></div>
+    <div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+    <div class="card">
+      <div class="chips"><span class="chip">${esc(t.tag)}</span>${item.rev?'<span class="chip rev">💪 Revancha</span>':''}${r.level==='experto'?'<span class="chip ex">🔥 Experto</span>':''}</div>
+      ${reading}
+      ${t.scene?`<div class="scene" aria-hidden="true">${t.scene}</div>`:''}
+      <p class="q">${esc(t.q)}</p>
+      ${t.es?`<div class="es-line"><p class="es t">${blankify(t.es)}</p>${sayBtn(t.es)}</div>`:''}
+      <div id="t-body"></div>
+      <div id="t-fb" aria-live="polite"></div>
+      <div id="t-hints" class="hints"></div>
+      <div id="t-actions" class="actions"></div>
+    </div></section>`, 'task');
+  renderBody(); renderHints(); renderActions();
+  if(r.cur.fb) setFb(r.cur.fb[0], r.cur.fb[1]);
+  const inp = document.getElementById('ans'); if(inp && !r.cur.done) inp.focus({preventScroll:true});
+}
+
+function cur(){ return S.run.cur; }
+function curTask(){ const r=S.run; return STATIONS[r.st].tasks[r.queue[r.pos].k]; }
+
+function renderBody(){
+  const t = curTask(), c = cur(), mode = modeOf(t), body = document.getElementById('t-body');
+  if(mode==='mc' || mode==='listen'){
+    const ans = t.answer[0];
+    let pre = '';
+    if(mode==='listen') pre = `<div class="row" style="align-items:center"><button class="btn warm listen-btn" data-a="listen">🔊 Anhören</button><span class="small">${esc(t.de)}</span></div>`;
+    body.innerHTML = pre + `<div class="choices">${c.choices.map((ch,i)=>{
+      let cls='', dis=c.done;
+      if(c.wrongPicks.includes(ch)){ cls='bad'; dis=true; }
+      if(c.done && ch===ans) cls='good';
+      return `<button class="choice ${cls}" data-a="choice" data-i="${i}" ${dis?'disabled':''}>${esc(ch)}</button>`;
+    }).join('')}</div>`;
+  } else if(mode==='input'){
+    if(!document.getElementById('ans')){
+      body.innerHTML = `<input type="text" id="ans" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Deine Antwort …" aria-label="Deine Antwort">
+      <div class="accents" style="margin-top:8px" aria-label="Sonderzeichen">${['á','é','í','ó','ú','ñ','¿','¡'].map(ch=>`<button data-a="acc" data-c="${ch}" tabindex="-1">${ch}</button>`).join('')}</div>`;
+    }
+    document.getElementById('ans').disabled = c.done;
+  } else if(mode==='match'){
+    const m = c.m;
+    const btn = (side,k)=>{
+      const label = t.pairs[k][side==='L'?0:1];
+      let cls=''; const ok=m.ok.includes(k);
+      if(ok) cls='ok'; else if(m.sel && m.sel.side===side && m.sel.k===k) cls='sel';
+      if(m.flash && m.flash[side]===k) cls='bad';
+      return `<button class="mbtn ${cls}" data-a="m" data-side="${side}" data-k="${k}" ${ok||c.done?'disabled':''}>${esc(label)}</button>`;
+    };
+    body.innerHTML = `<div class="match"><div class="col">${m.L.map(k=>btn('L',k)).join('')}</div><div class="col">${m.R.map(k=>btn('R',k)).join('')}</div></div>`;
+  } else if(mode==='order'){
+    const o = c.o;
+    body.innerHTML = `<div class="answer-line">${o.picked.map((k,idx)=>`<button class="wtile" data-a="atile" data-i="${idx}" ${c.done?'disabled':''}>${esc(t.tiles[k])}</button>`).join('')}</div>
+      <div class="pool" style="margin-top:10px">${o.pool.filter(k=>!o.picked.includes(k)).map(k=>`<button class="wtile" data-a="tile" data-k="${k}" ${c.done?'disabled':''}>${esc(t.tiles[k])}</button>`).join('')}</div>`;
+  }
+}
+function renderHints(){
+  const t = curTask(), c = cur();
+  document.getElementById('t-hints').innerHTML = t.hints.slice(0,c.hints).map((h,i)=>`<div class="hint"><b>Pista ${i+1}:</b> ${esc(h)}</div>`).join('');
+}
+function renderActions(){
+  const t = curTask(), c = cur(), mode = modeOf(t), r = S.run;
+  let h = '';
+  if(c.done){
+    const last = r.pos === r.queue.length-1;
+    h = `<button class="btn primary" data-a="next">${last?'Station abschließen ✓':'Weiter ▸'}</button>`;
+  } else {
+    if(mode==='input' || mode==='order') h += `<button class="btn primary" data-a="check">Prüfen</button>`;
+    if(mode==='order') h += `<button class="btn ghost" data-a="reset">↺ Zurücksetzen</button>`;
+    if(c.hints < t.hints.length) h += `<button class="btn ghost" data-a="hint">💡 Pista ${c.hints+1}/${t.hints.length} (−20 %)</button>`;
+  }
+  const el = document.getElementById('t-actions'); el.innerHTML = h;
+  if(c.done){ const b = el.querySelector('[data-a=next]'); if(b) b.focus({preventScroll:true}); }
+}
+function setFb(kind, html){ cur().fb=[kind,html]; document.getElementById('t-fb').innerHTML = `<div class="fb ${kind}">${html}</div>`; }
+function updPts(){ const e=document.getElementById('t-pts'); if(e) e.textContent='🪙 '+S.run.score; }
+
+function solved(quality, fixedPts){
+  const r=S.run, c=cur(), t=curTask(), item=r.queue[r.pos];
+  let p;
+  if(fixedPts!=null) p = fixedPts;
+  else { p = baseOf(t); if(c.tries>0) p*=0.5; if(quality==='accent') p*=0.75; p*=(1-0.2*c.hints); if(item.rev) p*=0.5; p=Math.max(1,Math.round(p)); }
+  r.score += p; c.done = true;
+  if(item.rev) r.rindo = true;
+  const praise = PRAISE[Math.floor(Math.random()*PRAISE.length)];
+  let msg = `<b>${praise}</b> +${p} 🪙`;
+  if(quality==='accent') msg = `<b>Fast perfekt!</b> +${p} 🪙<br>Achte auf den Akzent: <b>${esc(t.answer[0])}</b>`;
+  else if(modeOf(t)==='input' || modeOf(t)==='order') msg += `<br>${esc(t.answer[0])}`;
+  if(item.rev) msg += '<br>💪 Revancha geschafft, aus Fehlern gelernt!';
+  setFb('ok', msg); renderBody(); renderActions(); updPts();
+}
+function failed(ans){
+  const r=S.run, c=cur(), t=curTask(), item=r.queue[r.pos], mode=modeOf(t);
+  c.tries++; r.mistakes++;
+  if(t.tag==='Gerundio') r.gerOK=false;
+  if(t.tag==='Leseverstehen') r.wOK=false;
+  const m = lookupFb(t, ans);
+  if(c.tries<2){
+    setFb('bad', `<b>Leider nicht.</b> ${m?esc(m):'Lies den Satz noch einmal genau.'}<br>Noch ein Versuch (halbe Punkte), oder hol dir eine Pista.`);
+    const inp=document.getElementById('ans'); if(inp){ inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake'); inp.select(); }
+    renderBody(); renderActions();
+  } else {
+    c.done = true;
+    let rq='';
+    if(!item.rev){ r.queue.push({k:item.k, rev:true}); rq='<br>💪 Diese Aufgabe kommt als <b>Revancha</b> am Ende der Station noch einmal.'; }
+    setFb('bad', `<b>Leider falsch.</b> ${m?esc(m)+'<br>':''}Richtig ist: <b>${esc(t.answer[0])}</b><span class="rule">Merke: ${esc(t.hints[0])}</span>${rq}`);
+    renderBody(); renderActions();
+  }
+}
+
+function onChoice(i){
+  const c=cur(), t=curTask(); if(c.done) return;
+  const ch = c.choices[i];
+  if(ch===t.answer[0]) solved('exact');
+  else { c.wrongPicks.push(ch); failed(ch); }
+}
+function onCheck(){
+  const c=cur(), t=curTask(), mode=modeOf(t); if(c.done) return;
+  let ans;
+  if(mode==='input'){ ans = document.getElementById('ans').value; }
+  else if(mode==='order'){
+    if(c.o.picked.length < t.tiles.length){ setFb('info','Benutze alle Wörter, dann prüfen.'); return; }
+    ans = c.o.picked.map(k=>t.tiles[k]).join(' ');
+  }
+  const g = grade(t, ans);
+  if(g==='empty'){ setFb('info','Schreib zuerst eine Antwort.'); return; }
+  if(g==='exact' || g==='accent') solved(g); else failed(ans);
+}
+function onMatch(side, k){
+  const c=cur(), t=curTask(), m=c.m; if(c.done || m.ok.includes(k)) return;
+  m.flash = null;
+  if(!m.sel || m.sel.side===side){ m.sel = {side,k}; renderBody(); return; }
+  const other = m.sel; m.sel = null;
+  if(other.k===k){ m.ok.push(k); }
+  else { m.wrong++; S.run.mistakes++; m.flash = side==='L'? {L:k, R:other.k} : {R:k, L:other.k}; setTimeout(()=>{ if(S.run && S.run.cur===c){ m.flash=null; renderBody(); } }, 600); }
+  renderBody();
+  if(m.ok.length===t.pairs.length){
+    let p = Math.max(3, 15 - 3*m.wrong); p = Math.max(1, Math.round(p*(1-0.2*c.hints)));
+    if(S.run.queue[S.run.pos].rev) p = Math.max(1, Math.round(p*0.5));
+    solved('exact', p);
+    if(m.wrong) setFb('ok', `<b>¡Todo correcto!</b> +${p} 🪙 <span class="small">(${m.wrong} Fehlversuch${m.wrong>1?'e':''})</span>`);
+  }
+}
+function onHint(){ const c=cur(), t=curTask(); if(c.done || c.hints>=t.hints.length) return; c.hints++; S.run.hints++; renderHints(); renderActions(); }
+function nextTask(){
+  const r=S.run; r.pos++; r.cur=null;
+  if(r.pos>=r.queue.length) finishStation(); else renderTask();
+}
+
+function finishStation(){
+  const r = S.run, i = r.st, st = STATIONS[i];
+  const score = Math.max(1, r.score), prev = S.best[i], first = prev===0;
+  S.best[i] = Math.max(prev, score);
+  const stars = starsFor(i, score), news = [];
+  if(r.hints===0) award('sinpistas', news);
+  if(r.level==='experto') award('valiente', news);
+  if(i===1 && r.gerOK) award('gerundio', news);
+  if(i===1) award('eco', news);
+  if(i===2 && stars===3) award('agua', news);
+  if(i===3 && r.wOK) award('detective', news);
+  if(r.rindo) award('rindo', news);
+  if(r.hints===0 && r.mistakes===0) award('perfecto', news);
+  if(totalStars()===12) award('leyenda', news);
+  S.run = null;
+  const code = makeCode();
+  const extra = `<div class="plaque result">
+    ${starHtml(stars, true)}
+    <p><b>${score} Punkte</b> in dieser Runde. ${!first && score>prev?'🎉 Neuer Rekord für diese Station!':''}${!first && score<=prev?`Dein Rekord bleibt ${prev} Punkte.`:''}</p>
+    <div class="letter-row"><div class="letter-tile" aria-label="Buchstabe ${st.letter}">${st.letter}</div><p>${first?'Neuer Buchstabe für den Code!':'Diesen Buchstaben hast du schon.'}</p></div>
+    ${news.length?`<div class="newtro"><b>Neue Trophäe${news.length>1?'n':''}!</b>${news.map(t=>`<div class="tro-line"><span class="i">${t.i}</span><span><b>${esc(t.n)}</b><br><span class="small">${esc(t.d)}</span></span></div>`).join('')}</div>`:''}
+    <div class="codebox"><div><span class="lbl">Speichercode: abschreiben!</span><span class="c">${code}</span></div><button data-a="copy" data-c="${code}">Kopieren</button></div>
+    ${stars<3?'<p class="small">Tipp: Wiederhole die Station später, um mehr Sterne zu holen. Gezählt wird immer dein bestes Ergebnis.</p>':''}
+  </div>
+  <div class="row"><button class="btn primary" data-a="map">Zur Karte ▸</button><button class="btn ghost" data-a="open-st" data-i="${i}">Station wiederholen</button></div>`;
+  renderStory('¡Estación completada!', st.outro, null, null, extra);
+}
+
+/* ---------- Schließfach & Ende ---------- */
+function renderLocker(){
+  if(!S.lk) S.lk = {letters:['S','A','L','O'], picked:[], wrong:0, msg:''};
+  const L = S.lk;
+  const extra = `<div class="locker">
+    <span class="lk-label">Taquilla nº 7</span>
+    <div class="lk-slots">${[0,1,2,3].map(k=>`<span class="slot">${L.picked[k]!=null?L.letters[L.picked[k]]:''}</span>`).join('')}</div>
+    <div class="lk-letters">${L.letters.map((ch,k)=>`<button class="wtile" data-a="lk" data-k="${k}" ${L.picked.includes(k)?'disabled style="opacity:.3"':''}>${ch}</button>`).join('')}</div>
+  </div>
+  ${L.msg?`<div class="fb bad">${L.msg}</div>`:''}
+  <div class="row"><button class="btn ghost" data-a="lk-clear">↺ Zurücksetzen</button><button class="btn ghost" data-a="map">Zur Karte</button></div>`;
+  renderStory('🗝️ La taquilla', LOCKER_INTRO, null, null, extra);
+}
+function onLocker(k){
+  const L=S.lk; if(L.picked.includes(k) || L.picked.length>=4) return;
+  L.picked.push(k); L.msg='';
+  if(L.picked.length===4){
+    const w = L.picked.map(x=>L.letters[x]).join('');
+    if(w==='OLAS'){ S.lk=null; const news=[]; award('mision', news); if(totalStars()===12) award('leyenda', news); renderStory('¡Misión cumplida!', FINALE, '📜 Zum Zertifikat', renderCert); return; }
+    L.wrong++; L.picked=[];
+    L.msg = L.wrong===1 ? `„${w}“ öffnet das Schließfach nicht. Tipp: Im Wellenbad gibt es viele davon (Plural!).`
+      : `„${w}“ ist es nicht. Tipp: la ola, im Plural … Das Wort beginnt mit O.`;
+  }
+  renderLocker();
+}
+function renderCert(){
+  const today = new Date().toLocaleDateString('de-DE',{day:'numeric',month:'long',year:'numeric'});
+  const got = TROPHIES.filter(t=>hasTro(t.id)).length;
+  show(`<section class="plaque cert">
+    <div class="top"><span class="calle small" style="letter-spacing:.18em;text-transform:uppercase">Certificado · ${today}</span>
+      <span class="av">${S.avatar}</span><h2>${esc(S.nick)}</h2><span class="rank">${rankTitle()}</span></div>
+    <div class="nums">
+      <div class="num"><b>${totalStars()}/12</b><span>Sterne</span></div>
+      <div class="num"><b>${totalPoints()}</b><span>Punkte</span></div>
+      <div class="num"><b>${got}/${TROPHIES.length}</b><span>Trophäen</span></div>
+    </div>
+    <div class="tgrid">${TROPHIES.map(t=>`<div class="tro ${hasTro(t.id)?'':'lock'}"><span class="i">${t.i}</span><b>${esc(t.n)}</b><span>${esc(t.d)}</span></div>`).join('')}</div>
+    <div class="codebox"><div><span class="lbl">Dein Endcode (für deine Lehrkraft)</span><span class="c">${makeCode()}</span></div><button data-a="copy" data-c="${makeCode()}">Kopieren</button></div>
+    <p class="small">Mach einen Screenshot oder notiere den Code. Willst du mehr Sterne? Spiel einzelne Stationen noch einmal.</p>
+    <div class="row"><button class="btn primary" data-a="map">Stationen verbessern</button></div>
+  </section>`, 'cert');
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+document.addEventListener('pointerdown', e=>{ if(e.target.closest('[data-a=acc]')) e.preventDefault(); });
+document.addEventListener('click', e=>{
+  const b = e.target.closest('[data-a]'); if(!b || b.disabled) return;
+  const a = b.dataset.a;
+  switch(a){
+    case 'avatar': S.avatar=b.dataset.v; document.querySelectorAll('[data-a=avatar]').forEach(x=>x.setAttribute('aria-pressed', x.dataset.v===S.avatar)); break;
+    case 'new': {
+      S.nick = (document.getElementById('nick').value.trim() || 'Viajero/a').slice(0,16);
+      S.best=[0,0,0,0]; S.tro=0; S.elapsed=0;
+      renderStory('¡Bienvenido/a a Madrid!', PROLOGUE, 'Zur Karte ▸', ()=>renderMap());
+      break; }
+    case 'load': {
+      const d = readCode(document.getElementById('codein').value);
+      S.nick = (document.getElementById('nick').value.trim() || 'Viajero/a').slice(0,16);
+      if(!d){ renderStart('Dieser Code stimmt nicht. Prüfe jeden Buchstaben (es gibt keine 0, 1, I oder O).'); break; }
+      S.best=d.best; S.tro=d.tro; S.elapsed=0;
+      renderMap(`¡Hola de nuevo! Dein Spielstand ist geladen: ${totalStars()} Sterne, ${totalPoints()} Punkte.`);
+      break; }
+    case 'story-next': if(S.next) S.next(); break;
+    case 'de': { const on = !document.body.classList.contains('show-de'); document.body.classList.toggle('show-de', on); b.setAttribute('aria-pressed', on); break; }
+    case 'say': speak(S.say[+b.dataset.t]); break;
+    case 'listen': if(!speak(curTask().say)) setFb('info','Auf diesem Gerät gibt es keine Vorlesestimme. Nutze die Bedeutung als Hilfe.'); break;
+    case 'open-st': openStation(+b.dataset.i); break;
+    case 'level': startRun(S.pending, b.dataset.v); break;
+    case 'choice': onChoice(+b.dataset.i); break;
+    case 'check': onCheck(); break;
+    case 'hint': onHint(); break;
+    case 'next': nextTask(); break;
+    case 'm': onMatch(b.dataset.side, +b.dataset.k); break;
+    case 'tile': { const c=cur(); if(c.done) break; c.o.picked.push(+b.dataset.k); renderBody(); break; }
+    case 'atile': { const c=cur(); if(c.done) break; c.o.picked.splice(+b.dataset.i,1); renderBody(); break; }
+    case 'reset': { const c=cur(); if(c.done) break; c.o.picked=[]; renderBody(); break; }
+    case 'acc': { const inp=document.getElementById('ans'); if(!inp||inp.disabled) break; const s=inp.selectionStart??inp.value.length, en=inp.selectionEnd??s; inp.setRangeText(b.dataset.c, s, en, 'end'); inp.focus(); break; }
+    case 'map': S.run=null; renderMap(); break;
+    case 'locker': renderLocker(); break;
+    case 'lk': onLocker(+b.dataset.k); break;
+    case 'lk-clear': if(S.lk){ S.lk.picked=[]; S.lk.msg=''; } renderLocker(); break;
+    case 'cert': renderCert(); break;
+    case 'pause': openPause(); break;
+    case 'trophies': openTrophies(); break;
+    case 'resume': closeOv(); break;
+    case 'abort': closeOv(); S.run=null; renderMap('Station abgebrochen. Du kannst sie jederzeit neu starten.'); break;
+    case 'copy': {
+      const code=b.dataset.c;
+      try{ navigator.clipboard.writeText(code).then(()=>{ b.textContent='Kopiert ✓'; }).catch(()=>{ b.textContent='Bitte abschreiben'; }); }
+      catch(err){ b.textContent='Bitte abschreiben'; }
+      break; }
+  }
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && e.target.id==='ans'){ e.preventDefault(); const c=S.run&&S.run.cur; if(c && c.done) nextTask(); else onCheck(); }
+  if(e.key==='Enter' && e.target.id==='codein'){ e.preventDefault(); document.querySelector('[data-a=load]').click(); }
+  if(e.key==='Escape' && ov.classList.contains('on')) closeOv();
+});
+
+/* Start (mit Wiederaufnahme nach Aktualisierung im Viewer) */
+function boot(data){
+  if(data && Array.isArray(data.best)){
+    S.nick=data.nick||'Viajero/a'; S.avatar=data.avatar||'🦊'; S.best=data.best; S.tro=data.tro||0; S.elapsed=data.elapsed||0;
+    renderMap(); return;
+  }
+  renderStart();
+}
+window.claude?.hot?.snapshot?.(()=> S.screen==='start' ? {} : {nick:S.nick, avatar:S.avatar, best:S.best, tro:S.tro, elapsed:S.elapsed});
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
